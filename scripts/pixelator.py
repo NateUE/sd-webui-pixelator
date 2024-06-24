@@ -1,12 +1,14 @@
 from PIL import Image
-import gradio as gr
-import modules.scripts as scripts
-from modules import images
+from modules import scripts_postprocessing, ui_components, images
+from modules import scripts as scripts
 from modules.shared import opts
+import gradio as gr
+
+print("\033[0;32mPixelator Plugin Loading...\033[0m")
 
 
+# Class built for txt2img & img2img tabs
 class Script(scripts.Script):
-    print('Pixelator plugin loaded...')
 
     def title(self):
         return "Pixelator"
@@ -23,7 +25,7 @@ class Script(scripts.Script):
 
             with gr.Column():
                 with gr.Row():
-                    pixel_size = gr.Slider(minimum=1, maximum=32, step=1, value=6, label="Pixel size", info="1 = No change, recommended values：2-8")
+                    pixel_size = gr.Slider(minimum=1, maximum=32, step=1, value=4, label="Pixel size", info="1 = No change, recommended values：2-8")
 
         return [enabled, pixel_size]
 
@@ -48,3 +50,38 @@ class Script(scripts.Script):
                               processed.seed + i, processed.prompt, opts.samples_format, info=processed.info, p=p, suffix=f"-PixelSize-{pixel_size}")
 
         return processed
+
+
+# Class built for Extras tab
+class ScriptPostprocessingPixelator(scripts_postprocessing.ScriptPostprocessing):
+    name = "Pixelator"
+    order = 1500
+
+    # Load UI
+    def ui(self):
+        with ui_components.InputAccordion(False, label="Pixelator") as enable:
+            pixel_size = gr.Slider(minimum=1, maximum=32, step=1, value=4, label="Pixel Size", info="1 = No Change, recommended values: 2-8")
+
+        return {
+            "enable": enable,
+            "pixel_size": pixel_size,
+        }
+
+    # Process image from Extras tab
+    def process(self, pp: scripts_postprocessing.PostprocessedImage, enable, pixel_size):
+
+        # Run if Enabled, Return otherwise
+        if not enable:
+            return
+
+        # Process image
+        in_image = pp.image
+        small_image = in_image.resize((in_image.width // pixel_size, in_image.height // pixel_size), resample=Image.NEAREST)
+        out_image = small_image.resize((in_image.width, in_image.height), resample=Image.NEAREST)
+
+        # Set output image and info
+        pp.image = out_image
+        pp.info["Pixel Size"] = pixel_size
+
+
+print("\033[0;32mPixelator plugin loaded...\033[0m")
