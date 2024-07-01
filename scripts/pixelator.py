@@ -77,6 +77,7 @@ class ScriptPostprocessingPixelator(scripts_postprocessing.ScriptPostprocessing)
         # Process image
         in_image = pp.image
         small_image = in_image.resize((in_image.width // pixel_size, in_image.height // pixel_size), resample=Image.NEAREST)
+        images.save_image(small_image, "output\extras-images\pixelated_small", "", "", "", opts.samples_format, info=small_image.info, p=small_image, suffix=f"PixelSize-{pixel_size}")
         out_image = small_image.resize((in_image.width, in_image.height), resample=Image.NEAREST)
 
         # Set output image and info
